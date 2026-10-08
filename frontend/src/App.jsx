@@ -8,7 +8,7 @@ import {
 
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
-
+import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Journeys from "./pages/Journeys";
@@ -94,6 +94,7 @@ const AppLayout = () => {
               path="/simulator"
               element={<Simulator />}
             />
+            <Route path="/register" element={<Register />} />
 
             <Route
               path="/bays"
