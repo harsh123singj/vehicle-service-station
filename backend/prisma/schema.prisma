@@ -1,0 +1,344 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int        @id @default(autoincrement())
+  name         String
+  email        String     @unique
+  passwordHash String
+  role         Role       @default(OPERATOR)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  auditLogs    AuditLog[]
+
+  @@index([role])
+}
+
+model Site {
+  id        Int        @id @default(autoincrement())
+  name      String
+  code      String     @unique
+  address   String?
+  city      String?
+  state     String?
+  isActive  Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  alerts    Alert[]
+  auditLogs AuditLog[]
+  bays      Bay[]
+  cameras   Camera[]
+  journeys  Journey[]
+  queues    Queue[]
+}
+
+model Camera {
+  id              Int            @id @default(autoincrement())
+  siteId          Int
+  name            String
+  cameraCode      String         @unique
+  location        String?
+  status          CameraStatus   @default(ONLINE)
+  streamUrl       String?
+  lastHeartbeatAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  site            Site           @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  journeys        Journey[]
+  journeyEvents   JourneyEvent[]
+
+  @@index([siteId])
+  @@index([status])
+}
+
+model Vehicle {
+  id                 Int       @id @default(autoincrement())
+  registrationNumber String    @unique
+  vehicleType        String?
+  make               String?
+  model              String?
+  ownerName          String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  journeys           Journey[]
+
+  @@index([registrationNumber])
+}
+
+model Journey {
+  id                 Int                  @id @default(autoincrement())
+  siteId             Int
+  vehicleId          Int
+  cameraId           Int?
+  currentStatus      JourneyStatus        @default(ENTERED)
+  eligibilityStatus  EligibilityStatus?
+  entryTime          DateTime             @default(now())
+  identificationTime DateTime?
+  verificationTime   DateTime?
+  queueTime          DateTime?
+  serviceStartTime   DateTime?
+  serviceEndTime     DateTime?
+  exitTime           DateTime?
+  holdReason         String?
+  rejectionReason    String?
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  alerts             Alert[]
+  camera             Camera?              @relation(fields: [cameraId], references: [id])
+  site               Site                 @relation(fields: [siteId], references: [id])
+  vehicle            Vehicle              @relation(fields: [vehicleId], references: [id])
+  events             JourneyEvent[]
+  queue              Queue?
+  serviceSession     ServiceSession?
+  verifications      VerificationResult[]
+
+  @@index([siteId, currentStatus])
+  @@index([vehicleId])
+  @@index([entryTime])
+  @@index([eligibilityStatus])
+}
+
+model JourneyEvent {
+  id              Int              @id @default(autoincrement())
+  journeyId       Int
+  cameraId        Int?
+  eventType       JourneyEventType
+  source          EventSource
+  previousStatus  JourneyStatus?
+  newStatus       JourneyStatus?
+  eventTime       DateTime         @default(now())
+  externalEventId String?
+  metadata        Json?
+  createdAt       DateTime         @default(now())
+  camera          Camera?          @relation(fields: [cameraId], references: [id])
+  journey         Journey          @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@unique([cameraId, externalEventId])
+  @@index([journeyId, eventTime])
+  @@index([eventType])
+  @@index([source])
+  @@index([cameraId])
+}
+
+model VerificationResult {
+  id              Int                @id @default(autoincrement())
+  journeyId       Int
+  type            VerificationType
+  status          VerificationStatus
+  referenceNumber String?
+  responseData    Json?
+  checkedAt       DateTime?
+  errorMessage    String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  journey         Journey            @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@unique([journeyId, type])
+  @@index([journeyId])
+  @@index([type])
+  @@index([status])
+}
+
+model Queue {
+  id          Int         @id @default(autoincrement())
+  journeyId   Int         @unique
+  siteId      Int
+  position    Int?
+  priority    Int         @default(0)
+  status      QueueStatus @default(WAITING)
+  joinedAt    DateTime    @default(now())
+  calledAt    DateTime?
+  completedAt DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  journey     Journey     @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+  site        Site        @relation(fields: [siteId], references: [id])
+
+  @@index([siteId, status])
+  @@index([siteId, position])
+  @@index([priority])
+}
+
+model Bay {
+  id              Int              @id @default(autoincrement())
+  siteId          Int
+  bayNumber       String
+  name            String?
+  status          BayStatus        @default(AVAILABLE)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  site            Site             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  serviceSessions ServiceSession[]
+
+  @@unique([siteId, bayNumber])
+  @@index([siteId, status])
+}
+
+model ServiceSession {
+  id          Int           @id @default(autoincrement())
+  journeyId   Int           @unique
+  bayId       Int
+  status      ServiceStatus @default(IN_PROGRESS)
+  serviceType String?
+  startedAt   DateTime      @default(now())
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  bay         Bay           @relation(fields: [bayId], references: [id])
+  journey     Journey       @relation(fields: [journeyId], references: [id], onDelete: Cascade)
+
+  @@index([bayId])
+  @@index([status])
+}
+
+model Alert {
+  id             Int           @id @default(autoincrement())
+  siteId         Int
+  journeyId      Int?
+  severity       AlertSeverity
+  status         AlertStatus   @default(OPEN)
+  title          String
+  message        String
+  createdAt      DateTime      @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  journey        Journey?      @relation(fields: [journeyId], references: [id])
+  site           Site          @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId, status])
+  @@index([journeyId])
+  @@index([severity])
+}
+
+model AuditLog {
+  id          Int      @id @default(autoincrement())
+  userId      Int?
+  siteId      Int?
+  action      String
+  entityType  String
+  entityId    String?
+  description String?
+  metadata    Json?
+  createdAt   DateTime @default(now())
+  site        Site?    @relation(fields: [siteId], references: [id])
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([siteId])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+enum Role {
+  ADMIN
+  OPERATOR
+  SUPERVISOR
+}
+
+enum JourneyStatus {
+  ENTERED
+  IDENTIFIED
+  VERIFYING
+  ELIGIBLE
+  NOT_ELIGIBLE
+  HOLD
+  QUEUED
+  BAY_ASSIGNED
+  SERVICE_IN_PROGRESS
+  SERVICE_COMPLETED
+  EXITED
+  CANCELLED
+}
+
+enum JourneyEventType {
+  VEHICLE_ENTERED
+  VEHICLE_IDENTIFIED
+  VERIFICATION_STARTED
+  VERIFICATION_COMPLETED
+  ELIGIBILITY_DECIDED
+  VEHICLE_QUEUED
+  BAY_ASSIGNED
+  SERVICE_STARTED
+  SERVICE_COMPLETED
+  VEHICLE_EXITED
+  JOURNEY_CANCELLED
+  ALERT_CREATED
+  ALERT_RESOLVED
+  SYSTEM_ERROR
+}
+
+enum EventSource {
+  CAMERA
+  OPERATOR
+  SYSTEM
+  SIMULATOR
+  API
+}
+
+enum CameraStatus {
+  ONLINE
+  OFFLINE
+  DEGRADED
+}
+
+enum VerificationType {
+  REGISTRATION
+  COMPLIANCE
+  INSURANCE
+  FITNESS
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  FAILED
+  TIMEOUT
+  ERROR
+}
+
+enum EligibilityStatus {
+  ELIGIBLE
+  NOT_ELIGIBLE
+  HOLD
+}
+
+enum QueueStatus {
+  WAITING
+  CALLED
+  ASSIGNED
+  COMPLETED
+  CANCELLED
+}
+
+enum BayStatus {
+  AVAILABLE
+  OCCUPIED
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+enum AlertSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+enum ServiceStatus {
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
