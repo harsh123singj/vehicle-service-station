@@ -34,3 +34,19 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+
+# AI / development tool generated files
+.agents/
+.claude/
+.cursor/
+.devin/
+.windsurf/
+
+# Backend generated AI skill files
+backend/.agents/
+backend/.claude/
+backend/.cursor/
+backend/.devin/
+backend/.windsurf/
+backend/skills-lock.json
