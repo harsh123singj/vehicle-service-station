@@ -8,6 +8,7 @@ import {
 
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
+
 import Register from "./pages/Register";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
@@ -63,6 +64,7 @@ const AppLayout = () => {
         />
 
         <main className="p-4 sm:p-6">
+
           <Routes>
 
             <Route
@@ -94,7 +96,6 @@ const AppLayout = () => {
               path="/simulator"
               element={<Simulator />}
             />
-            <Route path="/register" element={<Register />} />
 
             <Route
               path="/bays"
@@ -117,6 +118,7 @@ const AppLayout = () => {
             />
 
           </Routes>
+
         </main>
 
       </div>
@@ -133,7 +135,8 @@ const App = () => {
 
       <Routes>
 
-        {/* Login */}
+        {/* ---------------- Public Routes ---------------- */}
+
         <Route
           path="/login"
           element={
@@ -143,7 +146,18 @@ const App = () => {
           }
         />
 
-        {/* Protected Application */}
+        <Route
+          path="/register"
+          element={
+            localStorage.getItem("token")
+              ? <Navigate to="/dashboard" replace />
+              : <Register />
+          }
+        />
+
+
+        {/* ---------------- Protected Application ---------------- */}
+
         <Route
           path="/*"
           element={
