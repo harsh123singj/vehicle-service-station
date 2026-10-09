@@ -14,7 +14,7 @@ const siteRoute = express.Router();
 
 siteRoute.use(authMiddleware);
 
-siteRoute.post("/", authorize("ADMIN"), createSite);
+siteRoute.post("/", authorize("ADMIN" ,"OPERATOR" , "SUPERVISOR" ,"USER"), createSite);
 siteRoute.get("/", authorize("ADMIN", "OPERATOR"), getAllSites);
 siteRoute.get("/:id", authorize("ADMIN", "OPERATOR"), getSiteById);
 siteRoute.put("/:id", authorize("ADMIN"), updateSite);

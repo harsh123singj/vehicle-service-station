@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 
 export const registerUser = async (req, res) => {
     try {
-        const { name, email, password, phone, role } = req.body;
+        const { name, email, password } = req.body;
 
         // 1. Validate required fields
         if (!name || !email || !password) {
@@ -37,7 +37,7 @@ export const registerUser = async (req, res) => {
                 name,
                 email,
                 passwordHash: hashedPassword,
-                role: role || "OPERATOR"
+                role: "OPERATOR"
             }
         });
 
@@ -108,7 +108,7 @@ export const loginUser = async (req, res) => {
             },
             process.env.JWT_SECRET,
             {
-                expiresIn: "1d"
+                expiresIn: "5d"
             }
         );
 

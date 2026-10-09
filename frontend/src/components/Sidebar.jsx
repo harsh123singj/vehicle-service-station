@@ -10,7 +10,8 @@ import {
   Car,
   X,
   Activity,
-  PlayCircle
+  PlayCircle,
+  Building2
 } from "lucide-react";
 
 import { useEffect, useState } from "react";
@@ -35,6 +36,7 @@ const menuItems = [
   icon: PlayCircle,
   path: "/simulator",
 },
+
   {
     label: "Journeys",
     icon: Route,
@@ -60,6 +62,11 @@ const menuItems = [
     icon: Camera,
     path: "/cameras",
   },
+  {
+  label: "Sites",
+  icon: Building2,
+  path: "/Sites",
+},
   {
     label: "Audit Logs",
     icon: FileText,

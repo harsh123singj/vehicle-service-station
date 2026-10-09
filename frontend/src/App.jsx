@@ -21,7 +21,7 @@ import Cameras from "./pages/Cameras";
 import AuditLogs from "./pages/AuditLogs";
 import CommandCenter from "./pages/CommandCenter";
 import Simulator from "./pages/Simulator";
-
+import Sites from "./pages/Sites";
 
 /* ---------------- Protected Route ---------------- */
 
@@ -83,6 +83,11 @@ const AppLayout = () => {
             />
 
             <Route
+              path="/login"
+              element={<Login />}
+            />
+
+            <Route
               path="/queue"
               element={<Queue />}
             />
@@ -90,6 +95,11 @@ const AppLayout = () => {
             <Route
               path="/command-center"
               element={<CommandCenter />}
+            />
+
+            <Route
+              path="/sites"
+              element={<Sites />}
             />
 
             <Route
